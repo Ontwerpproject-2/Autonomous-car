@@ -20,8 +20,8 @@
 // The setup() function runs once each time the micro-controller starts
 
 //globale variabelen
-const int VRx = A2;
-const int VRy = A3;
+const int VRx = A0;
+const int VRy = A1;
 int xPosition;
 int yPosition;
 int mapXP;
@@ -36,9 +36,7 @@ void setup()
 {
     Serial.begin(9600);
 
-    pinMode(VRx, INPUT);
-    pinMode(VRy, INPUT);
-    pinMode(forward, OUTPUT);
+    pinMode(forward, OUTPUT)
 }
 
 // Add the main program code into the continuous loop() function
@@ -55,7 +53,6 @@ void loop()
     Serial.println(mapXP);
     //Serial.print(" | Y: ");
     //Serial.println(mapYP);
-
     
     analogWrite(forward, mapXP);
 
