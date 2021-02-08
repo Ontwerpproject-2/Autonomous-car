@@ -26,6 +26,8 @@ int xPosition;
 int yPosition;
 int mapXP;
 int mapYP;
+int mapXN;
+int mapYN;
 
 //LEDS
 int forward = 9;
@@ -36,7 +38,7 @@ void setup()
 {
     Serial.begin(9600);
 
-    pinMode(forward, OUTPUT)
+    pinMode(forward, OUTPUT);
 }
 
 // Add the main program code into the continuous loop() function
@@ -46,11 +48,13 @@ void loop()
     yPosition = analogRead(VRy);    
     mapXP = map(xPosition, 512, 1023, 0, 255);
     mapYP = map(yPosition, 512, 1023, 0, 255);
+    mapXN = map(xPosition, 0, 511, 255, 0);
+    mapYN = map(yPosition, 0, 511, 255,0);
 
-    Serial.print("X (1024): ");
-    Serial.print(xPosition);
-    Serial.print("| X (256): ");
-    Serial.println(mapXP);
+    Serial.print("XP: ");
+    Serial.print(mapXP);
+    Serial.print("| XN: ");
+    Serial.println(mapXN);
     //Serial.print(" | Y: ");
     //Serial.println(mapYP);
     
