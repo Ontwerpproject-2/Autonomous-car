@@ -1,6 +1,6 @@
 //Pins
-int triggerPin = 3; //PWM signal
-int echoPin = 2; // normal digital pin
+const int triggerPin = 27; //PWM signal of 3.3V
+const int echoPin = 25; // normal digital pin !!Returns 5V!!
 
 // defines variables
 long duration; // variable for the duration of sound wave travel
