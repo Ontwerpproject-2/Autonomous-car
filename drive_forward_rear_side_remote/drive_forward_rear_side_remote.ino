@@ -15,10 +15,22 @@ const int freq = 5000;
 int moveSpeed = 255;
 
 void drive(bool LB,bool RB,bool LF,bool RF,bool rest, int driveSpeed){
-  if(LB==true){
-    ledcWrite(0,driveSpeed);
-    ledcWrite(1,0);
-    }else{
+  
+  if (rest == true){
+        ledcWrite(0, 0);
+        ledcWrite(1, 0);
+        ledcWrite(2, 0);
+        ledcWrite(3, 0);
+        ledcWrite(4, 0);
+        ledcWrite(5, 0);
+        ledcWrite(6, 0);
+        ledcWrite(7, 0);
+        }
+  if (rest == false){        
+   if(LB==true){
+      ledcWrite(0,driveSpeed);
+      ledcWrite(1,0);
+      }else{
       ledcWrite(0,0);
       ledcWrite(1,driveSpeed);
       }
@@ -43,16 +55,8 @@ void drive(bool LB,bool RB,bool LF,bool RF,bool rest, int driveSpeed){
       ledcWrite(6,0);
       ledcWrite(7,driveSpeed);
       }
-      if (rest == true){
-        ledcWrite(0, 0);
-        ledcWrite(1, 0);
-        ledcWrite(2, 0);
-        ledcWrite(3, 0);
-        ledcWrite(4, 0);
-        ledcWrite(5, 0);
-        ledcWrite(6, 0);
-        ledcWrite(7, 0);
-        }          
+     
+     }         
   }
 
 
@@ -87,55 +91,54 @@ void loop() {
   bool rightButtonState = digitalRead(rightButton);
   bool leftButtonState = digitalRead(leftButton);
   moveSpeed = analogRead(speedPin)/16;
-  Serial.println(moveSpeed);
+  
   if(Yval <= 1800){
       drive(0,0,0,0,0,moveSpeed);
       Yval = analogRead(VRy);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
   }
   if (Yval >= 1900){
       drive(1,1,1,1,0,moveSpeed);
       Yval = analogRead(VRy);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
   }
    if (Yval >1800 && Yval <1900){
-      ledcWrite(0, 0);
-      ledcWrite(1, 0);
-      ledcWrite(2, 0);
-      ledcWrite(3, 0);
-      ledcWrite(4, 0);
-      ledcWrite(5, 0);
-      ledcWrite(6, 0);
-      ledcWrite(7, 0);
+      drive(0,0,0,0,1,moveSpeed);
       Yval = analogRead(VRy);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);  
+      
   }
   if(Xval <= 1800){
     drive(0,1,1,0,0,moveSpeed);
       Xval = analogRead(VRx);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
     }
      if(Xval >= 1900){
     drive(1,0,0,1,0,moveSpeed);
       Xval = analogRead(VRx);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
     }
-    if(rightButtonState== true){
+      if (Xval >1800 && Xval <1900){
+      drive(0,0,0,0,1,moveSpeed);
+      Yval = analogRead(VRx);
+      moveSpeed = analogRead(speedPin)/16;
+      
+      } 
+    if(rightButtonState== true){ 
       drive(1,0,1,0,0,moveSpeed);
       rightButtonState = digitalRead(rightButton);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
     }
         if(leftButtonState== true){
     drive(0,1,0,1,0,moveSpeed);
       leftButtonState = digitalRead(leftButton);
       moveSpeed = analogRead(speedPin)/16;
-      Serial.println(moveSpeed);
+      
     }
     
 }
