@@ -1,3 +1,8 @@
+#include <HCSR04.h>
+
+HCSR04 hc(22,23);//initialisation class HCSR04 (trig pin , echo pin)
+//change this when SDA and SCL is needed
+
 const int leftBackMotor1 = 2;
 const int leftBackMotor2 = 0;
 const int rightBackMotor1 = 17;
@@ -94,11 +99,20 @@ void setup() {
   ledcAttachPin(leftFrontMotor2, 5);
   ledcAttachPin(rightFrontMotor1, 6);
   ledcAttachPin(rightFrontMotor2, 7);
-  moveSpeed = 150;
+  moveSpeed = 100;
 
 }
 
 void loop() {
+  Serial.print(hc.dist());
+  backward(moveSpeed);
+  while(hc.dist()>= 10){
+    backward(moveSpeed);
+  }
+  while(hc.dist()< 10){
+    translateRight(moveSpeed);
+  }
+  /*
   delay(5000);
   forward(moveSpeed);
   delay(500);
@@ -111,4 +125,5 @@ void loop() {
   translateRight(moveSpeed);
   delay(500);
   rest();
+  */
 }
