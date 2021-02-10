@@ -42,9 +42,11 @@ void drive(bool LB,bool RB,bool LF,bool RF, int driveSpeed){
      }else{
       ledcWrite(6,0);
       ledcWrite(7,driveSpeed);
-      }
-         
+      }        
   }
+
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -66,6 +68,7 @@ void setup() {
   ledcAttachPin(leftFrontMotor2, 5);
   ledcAttachPin(rightFrontMotor1, 6);
   ledcAttachPin(rightFrontMotor2, 7);
+
 }
 
 void loop() {
@@ -74,11 +77,16 @@ void loop() {
   bool rightButtonState = digitalRead(rightButton);
   bool leftButtonState = digitalRead(leftButton);
   moveSpeed = analogRead(speedPin)/16;
+  Serial.println(moveSpeed);
   if(Yval <= 1800){
       drive(1,1,1,1,moveSpeed);
+      Yval = analogRead(VRy);
+      moveSpeed = analogRead(speedPin)/16;
   }
   if (Yval >= 1900){
       drive(0,0,0,0,moveSpeed);
+      Yval = analogRead(VRy);
+      moveSpeed = analogRead(speedPin)/16;
   }
    if (Yval >1800 && Yval <1900){
       ledcWrite(0, 0);
@@ -89,18 +97,28 @@ void loop() {
       ledcWrite(5, 0);
       ledcWrite(6, 0);
       ledcWrite(7, 0);
+      Yval = analogRead(VRy);
+      moveSpeed = analogRead(speedPin)/16;
   }
   if(Xval <= 1800){
     drive(0,1,1,0,moveSpeed);
+      Xval = analogRead(VRx);
+      moveSpeed = analogRead(speedPin)/16;
     }
      if(Xval >= 1900){
     drive(1,0,0,1,moveSpeed);
+      Xval = analogRead(VRx);
+      moveSpeed = analogRead(speedPin)/16;
     }
     if(rightButtonState== true){
       drive(1,0,1,0,moveSpeed);
+      rightButtonState = digitalRead(rightButton);
+      moveSpeed = analogRead(speedPin)/16;
     }
         if(leftButtonState== true){
     drive(0,1,0,1,moveSpeed);
+      leftButtonState = digitalRead(leftButton);
+      moveSpeed = analogRead(speedPin)/16;
     }
     
 }
