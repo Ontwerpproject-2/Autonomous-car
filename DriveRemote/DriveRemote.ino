@@ -46,9 +46,6 @@ void drive(bool LB,bool RB,bool LF,bool RF, int driveSpeed){
          
   }
 
-
-
-
 void setup() {
   Serial.begin(9600);
   ledcSetup(0, freq, 8);
@@ -69,7 +66,6 @@ void setup() {
   ledcAttachPin(leftFrontMotor2, 5);
   ledcAttachPin(rightFrontMotor1, 6);
   ledcAttachPin(rightFrontMotor2, 7);
-
 }
 
 void loop() {
@@ -78,7 +74,6 @@ void loop() {
   bool rightButtonState = digitalRead(rightButton);
   bool leftButtonState = digitalRead(leftButton);
   moveSpeed = analogRead(speedPin)/16;
-  Serial.println(moveSpeed);
   if(Yval <= 1800){
       drive(1,1,1,1,moveSpeed);
   }
