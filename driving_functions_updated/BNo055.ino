@@ -1,3 +1,4 @@
+/*
 void gybno5(){
   Wire.beginTransmission(GY_BNO05);
   Wire.write(0x08); 
@@ -25,3 +26,4 @@ void gybno5(){
   (Wire.read()|Wire.read()<<8 );
   (Wire.read()|Wire.read()<<8 );
 }
+*/

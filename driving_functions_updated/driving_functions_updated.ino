@@ -1,5 +1,5 @@
 #include <HCSR04.h>
-#include <Wire.h>
+//#include <Wire.h>
 
 //Pins
 const int LFmotorFW = 2;
@@ -23,7 +23,7 @@ int moveSpeed;
 float distanceForward;
 float distanceLeft;
 float yaw,roll,pitch,accx,accy,accz,gyrox,gyroy,gyroz,x0gy,y0gy,z0gy,xgy,ygy,zgy;
-const int GY_BNO05=0x29;
+//const int GY_BNO05=0x29;
 
 void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool RB2, int driveSpeed){
   if(LF1==true){
@@ -90,7 +90,7 @@ void rest(){
   }
 
 void setup() { 
-  Serial.begin(9600);
+  /*
   //I2C communication
   Wire.begin();
   Wire.setClock(400000);
@@ -109,6 +109,7 @@ void setup() {
   x0gy = yaw; //startposition X,Y,Z of gyroscope
   y0gy = roll;
   z0gy = pitch;
+  */
   Serial.begin(9600);  //Setting the baudrate
     
   ledcSetup(0, freq, 8);
@@ -135,8 +136,29 @@ void loop() {
  distanceForward = hc.dist(0);
  distanceLeft = hc.dist(1);
 
+ Serial.print("Forward");
+ Serial.print(distanceForward);
+ Serial.print("| Left");
+ Serial.println(distanceLeft);
+
+ while(distanceForward >= 10)
+ {
+  forward(moveSpeed);
+  if(distanceForward < 10)
+  {
+    translateLeft(moveSpeed);
+    if(distanceLeft < 10)
+    {
+          rest();
+          delay(5000);
+    }
+
+  }
+ }
+
   //BNO055
-  gybno5();
+  //gybno5();
+  /*
   Serial.print("yaw=");
   Serial.print(yaw);
   Serial.print(" roll=");
@@ -149,4 +171,5 @@ void loop() {
   Serial.print(" | Left:");
   Serial.println(distanceLeft); 
   delay(1000);
+  */
 }
