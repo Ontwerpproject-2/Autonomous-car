@@ -1,32 +1,32 @@
-const int leftBackMotor1 = 2;
-const int leftBackMotor2 = 0;
-const int rightBackMotor1 = 17;
-const int rightBackMotor2 = 5;
-const int leftFrontMotor1 = 4;
-const int leftFrontMotor2 = 16;
-const int rightFrontMotor1 = 18;
-const int rightFrontMotor2 = 19;
+const int LFmotorFW = 2;
+const int LFmotorBW = 0;
+const int LBmotorFW = 4;
+const int LBmotorBW = 16;
+const int RFmotorFW = 17;
+const int RFmotorBW = 5;
+const int RBmotorFW = 18;
+const int RBmotorBW = 19;
 const int freq = 5000;
-int moveSpeed = 0;
+int moveSpeed;
 
 
-void drive(bool LB1,bool RB1,bool LF1,bool RF1,bool LB2, bool RB2, bool LF2,bool RF2, int driveSpeed){
-  if(LB1==true){
+void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool RB2, int driveSpeed){
+  if(LF1==true){
     ledcWrite(0,driveSpeed);
     }else{
      ledcWrite(0,0);
      }
-  if(RB1==true){
+  if(RF1==true){
      ledcWrite(2,driveSpeed);
      }else{
       ledcWrite(2,0);
       }
-   if(LF1==true){
+   if(LB1==true){
      ledcWrite(4,driveSpeed);
      }else{
       ledcWrite(4,0);
       }
-   if(RF1==true){
+   if(RB1==true){
      ledcWrite(6,driveSpeed);
      }else{
       ledcWrite(6,0);
@@ -59,16 +59,16 @@ void backward( int driveSpeed){
   drive(0,0,0,0,1,1,1,1,driveSpeed);
   }
 void translateLeft( int driveSpeed){
-  drive(1,0,1,0,0,1,0,1,driveSpeed);
+  drive(0,1,1,0,1,0,0,1,driveSpeed);
   }
 void translateRight( int driveSpeed){
-  drive(0,1,0,1,1,0,1,0,driveSpeed);
+  drive(1,0,0,1,0,1,1,0,driveSpeed);
   }
 void turnRight( int driveSpeed){
-  drive(1,1,0,0,0,0,1,1,driveSpeed);
+  drive(1,0,1,0,0,1,0,1,driveSpeed);
   }
 void turnLeft( int driveSpeed){
-  drive(0,0,1,1,1,1,0,0,driveSpeed);
+  drive(0,1,0,1,1,0,1,0,driveSpeed);
   }
 void rest(){
   drive(0,0,0,0,0,0,0,0,0);
@@ -86,29 +86,18 @@ void setup() {
   ledcSetup(5, freq, 8);
   ledcSetup(6, freq, 8);
   ledcSetup(7, freq, 8);
-  ledcAttachPin(leftBackMotor1, 0);
-  ledcAttachPin(leftBackMotor2, 1);
-  ledcAttachPin(rightBackMotor1, 2);
-  ledcAttachPin(rightBackMotor2, 3);
-  ledcAttachPin(leftFrontMotor1, 4);
-  ledcAttachPin(leftFrontMotor2, 5);
-  ledcAttachPin(rightFrontMotor1, 6);
-  ledcAttachPin(rightFrontMotor2, 7);
-  moveSpeed = 150;
-
+  ledcAttachPin(LFmotorFW, 0);
+  ledcAttachPin(LFmotorBW, 5);
+  ledcAttachPin(RFmotorFW, 2);
+  ledcAttachPin(RFmotorBW, 7);
+  ledcAttachPin(LBmotorFW, 4);
+  ledcAttachPin(LBmotorBW, 1);
+  ledcAttachPin(RBmotorFW, 6);
+  ledcAttachPin(RBmotorBW, 3);
+  moveSpeed = 120;
 }
 
 void loop() {
-  delay(5000);
-  forward(moveSpeed);
-  delay(500);
-  turnLeft(moveSpeed);
-  delay(500);
-  turnRight(moveSpeed);
-  delay(500);
-  translateLeft(moveSpeed);
-  delay(500);
-  translateRight(moveSpeed);
-  delay(500);
-  rest();
+     drive(0,1,0,0,1,0,0,0,moveSpeed);
+
 }
