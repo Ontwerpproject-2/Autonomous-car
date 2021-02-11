@@ -104,6 +104,7 @@ void setup() {
 }
 
 void loop() {
+  test();
   Serial.print(hc.dist());
   backward(moveSpeed);
   while(hc.dist()>= 10){
