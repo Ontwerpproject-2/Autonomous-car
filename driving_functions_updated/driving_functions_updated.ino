@@ -1,3 +1,7 @@
+#include <HCSR04.h>
+#include <Wire.h>
+
+//Pins
 const int LFmotorFW = 2;
 const int LFmotorBW = 0;
 const int LBmotorFW = 4;
@@ -6,9 +10,20 @@ const int RFmotorFW = 17;
 const int RFmotorBW = 5;
 const int RBmotorFW = 18;
 const int RBmotorBW = 19;
+const int triggerPin = 32;
+const int echoPinForward =  35;
+const int echoPinLeft = 34;
+//SCL pin = 22 | SDA pin = 21
+
+HCSR04 hc(triggerPin,new int[2]{echoPinForward,echoPinLeft},2);//initialisation class HCSR04 (trig pin , echo pins, number of sensors)
+
+//Variabels
 const int freq = 5000;
 int moveSpeed;
-
+float distanceForward;
+float distanceLeft;
+float yaw,roll,pitch,accx,accy,accz,gyrox,gyroy,gyroz,x0gy,y0gy,z0gy,xgy,ygy,zgy;
+const int GY_BNO05=0x29;
 
 void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool RB2, int driveSpeed){
   if(LF1==true){
@@ -74,10 +89,28 @@ void rest(){
   drive(0,0,0,0,0,0,0,0,0);
   }
 
-
-
-
-void setup() {
+void setup() { 
+  Serial.begin(9600);
+  //I2C communication
+  Wire.begin();
+  Wire.setClock(400000);
+  delay(100);
+  Wire.beginTransmission(GY_BNO05);
+  Wire.write(0x3E); // Power Mode
+  Wire.write(0x00);
+  Wire.endTransmission();
+  delay(100);
+  Wire.beginTransmission(GY_BNO05);
+  Wire.write(0x3D); // Operation Mode
+  Wire.write(0x0C); //NDOF:0X0C (or B1100) , IMU:0x08 (or B1000) , NDOF_FMC_OFF: 0x0B (or B1011)
+  Wire.endTransmission();
+  delay(100);
+  gybno5();
+  x0gy = yaw; //startposition X,Y,Z of gyroscope
+  y0gy = roll;
+  z0gy = pitch;
+  Serial.begin(9600);  //Setting the baudrate
+    
   ledcSetup(0, freq, 8);
   ledcSetup(1, freq, 8);
   ledcSetup(2, freq, 8);
@@ -98,6 +131,22 @@ void setup() {
 }
 
 void loop() {
- 
+  //Ultrasound
+ distanceForward = hc.dist(0);
+ distanceLeft = hc.dist(1);
 
+  //BNO055
+  gybno5();
+  Serial.print("yaw=");
+  Serial.print(yaw);
+  Serial.print(" roll=");
+  Serial.print(roll);
+  Serial.print(" pitch=");
+  Serial.println(pitch);
+ 
+  Serial.print("Forward: ");
+  Serial.print(distanceForward);
+  Serial.print(" | Left:");
+  Serial.println(distanceLeft); 
+  delay(1000);
 }
