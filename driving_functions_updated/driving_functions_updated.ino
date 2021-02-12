@@ -1,3 +1,4 @@
+//assigning pins to each motor direction going to the H-bridge
 const int LFmotorFW = 2;
 const int LFmotorBW = 0;
 const int LBmotorFW = 4;
@@ -6,10 +7,16 @@ const int RFmotorFW = 17;
 const int RFmotorBW = 5;
 const int RBmotorFW = 18;
 const int RBmotorBW = 19;
-const int freq = 5000;
-int moveSpeed;
+
+//assigning pins to the sensor inputs
+const int encoderPin = 33; //input from optical rotary encoder
+const int freq = 5000; //set frequency for the outgoing PWM signals
+int moveSpeed; 
+volatile int encoderCount;
+volatile int revolutionCount;
 
 
+//This function reads in 8 bools and an int value. Each bool represents a direction for a motor in which to turn. The driveSpeed int value is an 8bit value that steers the duty cycle for the manoeuvre (speed).
 void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool RB2, int driveSpeed){
   if(LF1==true){
     ledcWrite(0,driveSpeed);
@@ -52,32 +59,49 @@ void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool
       ledcWrite(7,0);
       }        
   }
-void forward( int driveSpeed){
+
+//MANOUVERS
+//driveSpeed = dutycycle = motor speed
+
+void forward( int driveSpeed){    //Drives forward
   drive(1,1,1,1,0,0,0,0,driveSpeed);
   }
-void backward( int driveSpeed){
+void backward( int driveSpeed){   //Drives backward
   drive(0,0,0,0,1,1,1,1,driveSpeed);
   }
-void translateLeft( int driveSpeed){
+void translateLeft( int driveSpeed){    //Slides left
   drive(0,1,1,0,1,0,0,1,driveSpeed);
   }
-void translateRight( int driveSpeed){
+void translateRight( int driveSpeed){   //Slides right
   drive(1,0,0,1,0,1,1,0,driveSpeed);
   }
-void turnRight( int driveSpeed){
+void turnRight( int driveSpeed){    //Rotates CW
   drive(1,0,1,0,0,1,0,1,driveSpeed);
   }
-void turnLeft( int driveSpeed){
+void turnLeft( int driveSpeed){   //Rotates CCW
   drive(0,1,0,1,1,0,1,0,driveSpeed);
   }
-void rest(){
+void rest(){    //Stops
   drive(0,0,0,0,0,0,0,0,0);
   }
 
+//Interrupt function for optical rotary encoder
+void IRAM_ATTR encoderVal(){
+  encoderCount++;
+  if(encoderCount == 20){
+    revolutionCount++;
+    encoderCount = 0;
+    Serial.println(revolutionCount);
+    }
+  }
 
 
 
 void setup() {
+  Serial.begin(9600);
+  pinMode(encoderPin, INPUT);
+
+  //assign PWM-channels with a corresponding frequency and resolution
   ledcSetup(0, freq, 8);
   ledcSetup(1, freq, 8);
   ledcSetup(2, freq, 8);
@@ -86,6 +110,8 @@ void setup() {
   ledcSetup(5, freq, 8);
   ledcSetup(6, freq, 8);
   ledcSetup(7, freq, 8);
+  
+  //assign PWM channels to corresponding pin
   ledcAttachPin(LFmotorFW, 0);
   ledcAttachPin(LFmotorBW, 5);
   ledcAttachPin(RFmotorFW, 2);
@@ -94,10 +120,46 @@ void setup() {
   ledcAttachPin(LBmotorBW, 1);
   ledcAttachPin(RBmotorFW, 6);
   ledcAttachPin(RBmotorBW, 3);
-  moveSpeed = 120;
+  //Declare speed
+  moveSpeed = 255;
+  attachInterrupt(digitalPinToInterrupt(encoderPin), encoderVal, RISING);
 }
 
 void loop() {
- 
+int a = digitalRead(encoderPin);
+if(revolutionCount<=1){
+  translateLeft(140);
+  }else{
+    drive(1,1,1,1,1,1,1,1,100);
+    delay(200);
+    rest();
+    delay(5000);
+    revolutionCount = 0;
+    encoderCount = 0;
+    }
+//if(revolutionCount<=1){
+//  for(int i = 0;i<=moveSpeed;i++){
+//    forward(i);
+//    delay(50);
+//  }
+//  forward(moveSpeed);
+//  }else{
+//    rest();
+//    delay(1000);
+//    revolutionCount=0;
+//    }/
+//  for(int i =100;i<=moveSpeed;i++){
+//    forward(i);
+//    delay(5);
+//  } 
+//  forward(moveSpeed);
+//  delay(500);
+//  for(int i = moveSpeed;i>=100;i--){
+//    forward(i);
+//    delay(5);
+//  } 
+//  forward(60);
+//  delay(5000);
+
 
 }
