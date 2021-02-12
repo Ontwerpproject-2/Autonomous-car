@@ -156,13 +156,13 @@ void setup() {
 void loop() {
   int a = digitalRead(encoderPin);
   distanceForward = ScanningUS(echoPinForward);
+  delay(10);
   distanceBackward = ScanningUS(echoPinBack);
+  delay(10);
   Serial.print("F: ");
   Serial.print(distanceForward);
   Serial.print(" |B: ");
   Serial.println(distanceBackward);
-
-  delay(1000);
 
   //if(revolutionCount<=1){
   //  translateLeft(140);
