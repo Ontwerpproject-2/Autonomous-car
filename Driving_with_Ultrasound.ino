@@ -138,6 +138,10 @@ void ScanningUS(int echoPin)
   if (echoPin == echoPinBack)
   {
     distanceBackward = (duration / 2) / 29.1;
+    if(distanceBack == 0)
+    {
+      rest();
+    }
   }
 }
 
