@@ -8,6 +8,7 @@ const int RFmotorBW = 5;
 const int RBmotorFW = 18;
 const int RBmotorBW = 19;
 
+
 //assigning pins to the sensor inputs
 const int encoderPin = 33; //input from optical rotary encoder
 const int freq = 5000; //set frequency for the outgoing PWM signals
@@ -15,10 +16,12 @@ int moveSpeed;
 volatile int encoderCount;
 volatile int revolutionCount;
 const int trigPin = 32;    // Trigger
-const int echoPinForward = 34;// Echo
-const int echoPinBack = 35;
-long duration, distanceForward, distanceBackward;
+const int echoPinForward = 35;// Echo
+const int echoPinLeft = 34;
+const int echoPinRight = 25;
+long duration, distanceForward, distanceLeft, distanceRight;
 long timeOut = 10000;
+
 
 
 //This function reads in 8 bools and an int value. Each bool represents a direction for a motor in which to turn. The driveSpeed int value is an 8bit value that steers the duty cycle for the manoeuvre (speed).
@@ -64,14 +67,16 @@ void drive(bool LF1,bool RF1,bool LB1,bool RB1,bool LF2, bool RF2, bool LB2,bool
       ledcWrite(7,0);
       }        
   }
+
+
+  
 //=======================================================
 //MANOUVERS
 //driveSpeed = dutycycle = motor speed
-
 void forward( int driveSpeed){    //Drives forward
   drive(1,1,1,1,0,0,0,0,driveSpeed);
   }
-void backward( int driveSpeed){   //Drives backward
+void reverse( int driveSpeed){   //Drives backward
   drive(0,0,0,0,1,1,1,1,driveSpeed);
   }
 void translateLeft( int driveSpeed){    //Slides left
@@ -90,52 +95,200 @@ void rest(){    //Stops
   drive(0,0,0,0,0,0,0,0,0);
   }
 
+
+
+  
+//=====================================================
+//Distance manouvers ran by rotary encoder
+//void leftRevs(int revs, int speedVal){
+//  rest();
+//  revolutionCount = 0;
+//  encoderCount = 0;
+//  while(revolutionCount<=revs){
+//    while(encoderCount<=20){
+//      
+//      
+//      }
+//    translateLeft(speedVal);
+//    }
+//    rest();
+//    revolutionCount = 0;
+//    encoderCount = 0;
+//    
+//  }
+
 //Interrupt function for optical rotary encoder
-void IRAM_ATTR encoderVal(){
-  encoderCount++;
-  if(encoderCount == 20){
-    revolutionCount++;
-    encoderCount = 0;
-    Serial.println(revolutionCount);
-    }
-  }
+//void encoderVal(){
+//  encoderCount++;
+//  if(encoderCount == 20){
+//    revolutionCount++;
+//    encoderCount = 0;
+//    }
+//  }
 
 //==============================================
 //Ultrasone sensor
-void ScanningUS(int echoPin)
+void scanningUS(int echoPin)
 {
   // The sensor is triggered by a HIGH pulse of 10 or more microseconds.
-  // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
   digitalWrite(trigPin, LOW);
   delayMicroseconds(5);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-
   // Read the signal from the sensor: a HIGH pulse whose
   // duration is the time (in microseconds) from the sending
   // of the ping to the reception of its echo off of an object.
   duration = pulseIn(echoPin, HIGH, timeOut);
 
-  if (echoPin == echoPinForward)
-  {
-    // Convert the time into a distance
+  if (echoPin == echoPinForward){
     distanceForward = (duration / 2) / 29.1;   // Divide by 29.1 or multiply by 0.0343
-    if(distanceForward == 0)
-    {
-      rest();
-    }
   }
-
-  if (echoPin == echoPinBack)
-  {
-    distanceBackward = (duration / 2) / 29.1;
-    if(distanceForward == 0)
-    {
-      rest();
-    }
+  
+  if (echoPin == echoPinLeft){
+    distanceLeft = (duration / 2) / 29.1;
+  }
+  
+  if (echoPin == echoPinRight){
+    distanceRight = (duration / 2) / 29.1;
   }
 }
+//=============================
+//FUNCTIONS USING THE ULTRASONE SENSOR
+
+
+void setParallel(){
+  scanningUS(echoPinForward);
+  delay(2);
+  scanningUS(echoPinLeft);
+  delay(2);
+  scanningUS(echoPinRight);
+  delay(2); 
+  int l1 = distanceLeft;
+  int r1 = distanceRight;
+  int f1 = distanceForward;
+  
+  }
+
+
+
+
+void chase(int distance,int moveSpeed,int state){
+  int chaser;
+  int director;
+  int pass = 0;
+  scanningUS(echoPinForward);
+  delay(2);
+  scanningUS(echoPinLeft);
+  delay(2);
+  scanningUS(echoPinRight);
+  delay(2); 
+
+  
+  while(state == 1 && pass<2){
+    scanningUS(echoPinForward);
+    delay(2);
+    scanningUS(echoPinLeft);
+    delay(2);
+    scanningUS(echoPinRight);
+    delay(2);
+    chaser = distanceLeft;
+    director = distanceForward;
+    Serial.print("F1: ");
+    Serial.print(distanceForward);
+    Serial.print(" |L1: ");
+    Serial.print(distanceLeft);
+    Serial.print(" |R1: ");
+    Serial.println(distanceRight);
+    
+   if(chaser > 11){
+       rest();
+       translateLeft(moveSpeed); 
+       }
+    if(chaser<9){
+       rest();
+       translateRight(moveSpeed);
+       }
+    if(chaser==0){
+       rest();
+       }
+    if(chaser>9 && chaser<11){
+       if(director >11){
+          forward(moveSpeed-20);
+          }
+        if(director <9){
+          reverse(moveSpeed-20);
+          }
+        if(director ==0){
+          rest();
+          }
+        if(director > 9 && director < 11){
+          rest();
+          pass++;
+          }
+        }
+    }
+     
+   while(state == 2 && pass<2){
+   scanningUS(echoPinForward);
+   delay(2);
+   scanningUS(echoPinLeft);
+   delay(2);
+   scanningUS(echoPinRight);
+   delay(2);
+   chaser = distanceForward;
+   director = distanceRight;
+   Serial.print("F2: ");
+   Serial.print(distanceForward);
+   Serial.print(" |L2: ");
+   Serial.print(distanceLeft);
+   Serial.print(" |R2: ");
+   Serial.println(distanceRight);
+   if(chaser > 11){
+    rest();
+    forward(moveSpeed-20); 
+    }
+   if(chaser<9){
+    rest();
+    reverse(moveSpeed-20);
+    }
+   if(chaser==0){
+    rest();
+    }
+   if(chaser>9 && chaser<11){
+       if(director >11){
+        translateRight(moveSpeed);
+        }
+       if(director <9){
+        translateLeft(moveSpeed);
+        }
+       if(director ==0){
+        rest();
+        }
+       if(director > 9 && director < 11){
+        rest();
+        pass++;
+        }
+     }
+  }
+  rest();
+ }
+
+//    if(distanceForward > 10){
+//      forward(moveSpeed-20); 
+//      }else if(distanceForward<10){
+//      reverse(moveSpeed-20);
+//        }else if(distanceForward == 0 || (distanceForward>9 && distanceForward<11)){
+//        rest;
+//        state--; 
+//      }
+    
+  
+
+
+
+
+
 
 
 void setup() {
@@ -143,7 +296,9 @@ void setup() {
   pinMode(encoderPin, INPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPinForward, INPUT);
-  pinMode(echoPinBack, INPUT);
+  pinMode(echoPinLeft, INPUT);
+  pinMode(echoPinRight, INPUT);
+  digitalWrite(trigPin, LOW);
 
   //assign PWM-channels with a corresponding frequency and resolution
   ledcSetup(0, freq, 8);
@@ -165,24 +320,28 @@ void setup() {
   ledcAttachPin(RBmotorFW, 6);
   ledcAttachPin(RBmotorBW, 3);
   //Declare speed
-  moveSpeed = 255;
-  attachInterrupt(digitalPinToInterrupt(encoderPin), encoderVal, RISING);
+  moveSpeed = 110;
 }
 
+
+
+
 void loop() {
-int a = digitalRead(encoderPin);
-ScanningUS(echoPinForward);
-ScanningUS(echoPinBack);
+
+chase(10,moveSpeed,1);
+chase(10,moveSpeed,2);
+delay(3000);
 Serial.print("F: ");
 Serial.print(distanceForward);
-Serial.print(" |B: ");
-Serial.println(distanceBackward);
+Serial.print(" |L: ");
+Serial.print(distanceLeft);
+Serial.print(" |R: ");
+Serial.println(distanceRight);
 
 //if(revolutionCount<=1){
 //  translateLeft(140);
 //  }else{
-//    drive(1,1,1,1,1,1,1,1,100);
-//    delay(200);
+//    brake(200,140);
 //    rest();
 //    delay(5000);
 //    revolutionCount = 0;
@@ -211,6 +370,4 @@ Serial.println(distanceBackward);
 //  } 
 //  forward(60);
 //  delay(5000);
-
-
 }
