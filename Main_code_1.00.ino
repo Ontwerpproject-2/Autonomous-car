@@ -19,8 +19,9 @@ const int trigPin = 32;    // Trigger
 const int echoPinForward = 35;// Echo
 const int echoPinLeft = 34;
 const int echoPinRight = 25;
+const int echoPinDown = 26;
 const int freq = 5000;//set frequency for the outgoing PWM signals
-long duration, distanceForward, distanceLeft, distanceRight;
+long duration, distanceForward, distanceLeft, distanceRight, distanceDown;
 long timeOut = 10000;
 int moveSpeed;
 
@@ -154,7 +155,7 @@ void rightSteps(int steps, int rotateSpeed) {
 
 //==============================================
 //Ultrasone sensor
-float ScanningUS(int echoPin)
+float scanningUS(int echoPin)
 {
   float distance;
   // The sensor is triggered by a HIGH pulse of 10 or more microseconds.
@@ -222,6 +223,7 @@ void setParallel(int driveSpeed) {
   }
 }
 
+//deze code gebruikt nog oude scanningUS code, deze is nu een functie geworden en returned een float
 void chase(int distance, int moveSpeed, int state) {
   int chaser;
   int director;
@@ -426,6 +428,7 @@ void setup() {
   pinMode(echoPinForward, INPUT);
   pinMode(echoPinLeft, INPUT);
   pinMode(echoPinRight, INPUT);
+  pinMode(echoPinDown, INPUT);
   pinMode(voltagePin, INPUT);
   digitalWrite(trigPin, LOW);
 
@@ -489,27 +492,58 @@ int state = 1;
 void loop() {
   if (state == 1)
   {
+    Serial.print("State: ");
+    Serial.println(state);
     //Insert all scanning sensors here
 
     //BNO055
     gybno5();
 
     //Ultrasoundsensors
-    ScanningUS(echoPinForward);
-    ScanningUS(echoPinLeft);
-    ScanningUS(echoPinRight);
+    distanceDown = scanningUS(echoPinForward);
+    distanceLeft = scanningUS(echoPinLeft);
+    distanceRight = scanningUS(echoPinRight);
+    distanceDown = scanningUS(echoPinDown);
+
+    //Scanning is done, now decide what to do
+    state = 2;
   }
   if (state == 2)
   {
-    //Insert all drive commands here
+    //Insert all commands here
+
+    //auto staat NIET op de brug
+    if (abs(roll) >= 20 || abs(pitch) >= 20)
+    {
+      Serial.println("ON BRIDGE");
+      delay(1000);
+      state = 3;
+    }
+    //Als de auto op brug staat (aangegeven door de gyroscoop) en het nadert de zijkanten
+    if (abs(roll) < 20 && abs(pitch) < 20)
+    {
+      Serial.println("ON FLOOR");
+      delay(1000);
+      state = 3;
+    }
   }
   if (state == 3)
   {
+    Serial.print("State: ");
+    Serial.println(state);
     //Insert the driving itself here
+
+    //After the driving is done check the battery
+    state = 4;
   }
   if (state == 4)
   {
+    Serial.print("State: ");
+    Serial.println(state);
+
     voltageCheck();
+    //After the voltage check go back to state 1
+    state = 1;
   }
 
 
