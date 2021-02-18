@@ -1,3 +1,10 @@
+#include "BluetoothSerial.h"
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
+
 #include <Wire.h>
 float yaw, roll, pitch, accx, accy, accz, gyrox, gyroy, gyroz, x0gy, y0gy, z0gy, xgy, ygy, zgy, yaw0, roll0, pitch0, rotateAngel;
 const int GY_BNO05 = 0x29;
@@ -24,6 +31,7 @@ const int freq = 5000;//set frequency for the outgoing PWM signals
 long duration, distanceForward, distanceLeft, distanceRight, distanceDown;
 long timeOut = 10000;
 int moveSpeed;
+String bluetoothString;
 
 
 void voltageCheck() {
@@ -80,8 +88,6 @@ void drive(bool LF1, bool RF1, bool LB1, bool RB1, bool LF2, bool RF2, bool LB2,
   }
 }
 
-
-
 //=======================================================
 //BASIC MANOUVERS
 //driveSpeed = dutycycle = motor speed
@@ -107,12 +113,8 @@ void rest() {   //Stops
   drive(0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-
-
-
 //=====================================================
 //Distance manouvers ran by rotary encoder
-
 void leftSteps(int steps, int rotateSpeed) {
   rest();
   int encoderCount = 0;
@@ -178,7 +180,6 @@ float scanningUS(int echoPin)
 //=============================
 //FUNCTIONS USING THE ULTRASONE SENSOR
 
-
 void setParallel(int driveSpeed) {
   bool leftIncrease;
   bool rightIncrease;
@@ -223,7 +224,8 @@ void setParallel(int driveSpeed) {
   }
 }
 
-//deze code gebruikt nog oude scanningUS code, deze is nu een functie geworden en returned een float
+//OPGEPAST: deze code gebruikt nog oude scanningUS code, deze is nu een functie geworden en returned een float
+//Delay zou ook niet meer nodig zijn
 void chase(int distance, int moveSpeed, int state) {
   int chaser;
   int director;
@@ -422,7 +424,13 @@ void rotate2(long rotateAngle)
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  //Bluetooth setup
+  SerialBT.begin("PLOPKOEK"); //Bluetooth device name
+  Serial.println("The device started, now you can pair it with bluetooth!");
+
+  //Pinnen
   pinMode(encoderPin, INPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPinForward, INPUT);
@@ -494,6 +502,8 @@ void loop() {
   {
     Serial.print("State: ");
     Serial.println(state);
+    bluetoothString = "State: " + String(state);
+    SerialBT.println(bluetoothString);
     //Insert all scanning sensors here
 
     //BNO055
@@ -546,6 +556,13 @@ void loop() {
     state = 1;
   }
 
+  if (Serial.available()) {
+    SerialBT.write(Serial.read());
+  }
+  if (SerialBT.available()) {
+    Serial.write(SerialBT.read());
+  }
+  delay(20);
 
 
   //forward(50);
