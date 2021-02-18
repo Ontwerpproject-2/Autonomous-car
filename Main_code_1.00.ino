@@ -8,6 +8,7 @@ BluetoothSerial SerialBT;
 #include <Wire.h>
 float yaw, roll, pitch, accx, accy, accz, gyrox, gyroy, gyroz, x0gy, y0gy, z0gy, xgy, ygy, zgy, yaw0, roll0, pitch0, rotateAngel;
 const int GY_BNO05 = 0x29;
+bool calibrated = false;
 
 //assigning pins to each motor direction going to the H-bridge
 const int LFmotorFW = 2;
@@ -28,7 +29,7 @@ const int echoPinLeft = 34;
 const int echoPinRight = 25;
 const int echoPinDown = 26;
 const int freq = 5000;//set frequency for the outgoing PWM signals
-long duration, distanceForward, distanceLeft, distanceRight, distanceDown;
+long duration, distanceForward, distanceLeft, distanceRight, distanceDown, distanceBeginningLeft, distanceBeginningRight, distanceEndLeft, distanceEndRight;
 long timeOut = 10000;
 int moveSpeed;
 String bluetoothString;
@@ -492,9 +493,10 @@ int state = 1;
 
 /* State discription
   1- scan
-  2- what to do
-  3- drive
-  4- battery check
+  2- calibrating
+  3- what to do
+  4- drive
+  5- battery check
 */
 
 void loop() {
@@ -515,10 +517,54 @@ void loop() {
     distanceRight = scanningUS(echoPinRight);
     distanceDown = scanningUS(echoPinDown);
 
-    //Scanning is done, now decide what to do
-    state = 2;
+    //Scanning is done, calibrate (state 2) or decide what to do (state 3)
+    if (calibrated == false)
+    {
+      state = 2;
+    }
+    if (calibrated == true)
+    {
+      state = 3;
+    }
   }
   if (state == 2)
+  {
+    distanceBeginningLeft = scanningUS(echoPinLeft);
+    distanceBeginningRight = scanningUS(echoPinRight);
+
+    //rij vooruit en kijk of de afstand veranderd
+    forward(moveSpeed);
+    delay(1000);
+    rest();
+    distanceEndLeft = scanningUS(echoPinLeft);
+    distanceEndRight = scanningUS(echoPinRight);
+
+    //afstand is niet veranderd dus we moeten niet meer calibreren
+    if (abs(distanceBeginningLeft - distanceEndLeft) <= 4 || abs(distanceBeginningRight - distanceEndRight) <= 4)
+    {
+      calibrated = true;
+    }
+    else
+    {
+      reverse(moveSpeed);
+      delay(1000);
+      rest();
+
+      if (distanceEndLeft < distanceBeginningLeft)
+      {
+        rotate2(10);
+      }
+      else if (distanceEndRight < distanceBeginningRight)
+      {
+        rotate2(-10);
+      }
+      else
+      {
+        rotate2(10);
+      }
+    }
+  }
+  if (state == 3)
   {
     //Insert all commands here
 
@@ -562,7 +608,7 @@ void loop() {
         }
       }
 
-      //Trapped in front and left
+      //Trapped in corner front and left
       if (distanceLeft < 20 && distanceForward < 20)
       {
         while (distanceForward < 20)
@@ -570,7 +616,7 @@ void loop() {
           translateRight(moveSpeed);
         }
       }
-      //Trapped in front and right
+      //Trapped in corner front and right
       if (distanceRight < 20 && distanceForward < 20)
       {
         while (distanceForward < 20)
@@ -582,16 +628,16 @@ void loop() {
       state = 3;
     }
   }
-  if (state == 3)
+  if (state == 4)
   {
     Serial.print("State: ");
     Serial.println(state);
     //Insert the driving itself here
 
     //After the driving is done check the battery
-    state = 4;
+    state = 5;
   }
-  if (state == 4)
+  if (state == 5)
   {
     Serial.print("State: ");
     Serial.println(state);
