@@ -510,7 +510,7 @@ void loop() {
     gybno5();
 
     //Ultrasoundsensors
-    distanceDown = scanningUS(echoPinForward);
+    distanceForward = scanningUS(echoPinForward);
     distanceLeft = scanningUS(echoPinLeft);
     distanceRight = scanningUS(echoPinRight);
     distanceDown = scanningUS(echoPinDown);
@@ -522,7 +522,7 @@ void loop() {
   {
     //Insert all commands here
 
-    //auto staat NIET op de brug
+    //Auto staat op de brug
     if (abs(roll) >= 20 || abs(pitch) >= 20)
     {
       Serial.println("ON BRIDGE");
@@ -530,10 +530,55 @@ void loop() {
       state = 3;
     }
     //Als de auto op brug staat (aangegeven door de gyroscoop) en het nadert de zijkanten
+
+    //Auto staat op de vloer
     if (abs(roll) < 20 && abs(pitch) < 20)
     {
       Serial.println("ON FLOOR");
       delay(1000);
+
+      //Escape function if trapped
+      if (distanceLeft < 50 && distanceRight < 50 && distanceForward < 15)
+      {
+        while (distanceLeft < 50 || distanceRight < 50)
+        {
+          reverse(moveSpeed);
+        }
+        //Translate to right to go out of the labyrinth
+        if (distanceLeft < distanceRight)
+        {
+          while (distanceRight > 20)
+          {
+            translateRight(moveSpeed);
+          }
+        }
+        //Translate to left to go out of labyrinth
+        if (distanceRight < distanceLeft)
+        {
+          while (distanceLeft > 20)
+          {
+            translateLeft(moveSpeed);
+          }
+        }
+      }
+
+      //Trapped in front and left
+      if (distanceLeft < 20 && distanceForward < 20)
+      {
+        while (distanceForward < 20)
+        {
+          translateRight(moveSpeed);
+        }
+      }
+      //Trapped in front and right
+      if (distanceRight < 20 && distanceForward < 20)
+      {
+        while (distanceForward < 20)
+        {
+          translateLeft(moveSpeed);
+        }
+      }
+
       state = 3;
     }
   }
