@@ -626,8 +626,9 @@ void loop() {
         forward(moveSpeed);
         delay(200);
         rest();
+
       }
-      else
+      if (distanceForward <= 10)
       {
         rest();
         Serial.println("OBSTAKEL VAN VOOR");
@@ -636,45 +637,46 @@ void loop() {
       //muur links
       if (distanceLeft < 10)
       {
-        while (distanceLeft < 10)
-        {
-          translateRight(moveSpeed);
-        }
-        rest();
+        translateRight(moveSpeed);
+        delay(200);
+
       }
 
       //muur rechts
       if (distanceRight < 10)
       {
-        while (distanceRight < 10)
-        {
-          translateLeft(moveSpeed);
-        }
-        rest();
+
+        translateLeft(moveSpeed);
+        delay(200);
+
       }
 
       //Escape function if trapped
       if (distanceLeft < 50 && distanceRight < 50 && distanceForward < 15)
       {
         Serial.println("ESCAPE FUNCTION");
-        while (distanceLeft < 50 || distanceRight < 50)
+        if (distanceLeft < 50 || distanceRight < 50)
         {
           reverse(moveSpeed);
+          delay(200);
+
         }
         //Translate to right to go out of the labyrinth
         if (distanceLeft < distanceRight)
         {
-          while (distanceRight > 20)
+          if (distanceRight > 20)
           {
             translateRight(moveSpeed);
+            delay(200);
           }
         }
         //Translate to left to go out of labyrinth
         if (distanceRight < distanceLeft)
         {
-          while (distanceLeft > 20)
+          if (distanceLeft > 20)
           {
             translateLeft(moveSpeed);
+
           }
         }
       }
@@ -682,21 +684,21 @@ void loop() {
       //Trapped in corner front and left
       if (distanceLeft < 20 && distanceForward < 20)
       {
-        while (distanceForward < 20)
+        if (distanceForward < 20)
         {
           translateRight(moveSpeed);
+
         }
       }
       //Trapped in corner front and right
       if (distanceRight < 20 && distanceForward < 20)
       {
-        while (distanceForward < 20)
+        if (distanceForward < 20)
         {
           translateLeft(moveSpeed);
+
         }
       }
-
-      
     }
     state = 4;
   }
