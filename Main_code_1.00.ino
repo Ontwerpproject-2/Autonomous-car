@@ -1,14 +1,19 @@
-#include "BluetoothSerial.h"
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
+/*
+  #include "BluetoothSerial.h"
+  #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+  #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+  #endif
 
-BluetoothSerial SerialBT;
+  BluetoothSerial SerialBT;
+*/
 
 #include <Wire.h>
+#include <ESP32Servo.h>
 float yaw, roll, pitch, accx, accy, accz, gyrox, gyroy, gyroz, x0gy, y0gy, z0gy, xgy, ygy, zgy, yaw0, roll0, pitch0, rotateAngel;
 const int GY_BNO05 = 0x29;
 bool calibrated = false;
+
+Servo myservo;  // create servo object to control a servo
 
 //assigning pins to each motor direction going to the H-bridge
 const int LFmotorFW = 2;
@@ -23,15 +28,19 @@ const int buzzerPin = 15;
 const int voltagePin = 13;
 
 const int encoderPin = 33; //input from rotary encoder
-const int trigPin = 32;    // Trigger
+const int trigPin = 23;    // Trigger
 const int echoPinForward = 35;// Echo
 const int echoPinLeft = 34;
 const int echoPinRight = 25;
 const int echoPinDown = 26;
+const int servoControlPin = 27;
 const int freq = 5000;//set frequency for the outgoing PWM signals
 long duration, distanceForward, distanceLeft, distanceRight, distanceDown, distanceBeginningLeft, distanceBeginningRight, distanceEndLeft, distanceEndRight;
 long timeOut = 10000;
 int moveSpeed;
+int pos;
+int arrayForward[7];
+int arrayPos[7] = {70, 80, 90, 100, 110, 120, 130};
 String bluetoothString;
 
 
@@ -368,13 +377,13 @@ void rotate2(long rotateAngle)
     while ( yaw > 90)
     {
       //Turn Right
+      turnRight(moveSpeed);
       gybno5();
       Serial.print("TURN RIGHT  ");
       Serial.print("endAngle= ");
       Serial.print(endAngle);
       Serial.print("| yaw=");
       Serial.println(yaw);
-      delay(1000);
     }
   }
 
@@ -385,51 +394,53 @@ void rotate2(long rotateAngle)
     while (yaw < 270)
     {
       //Turn Left
+      turnLeft(moveSpeed);
       gybno5();
       Serial.print("TURN LEFT  ");
       Serial.print("endAngle= ");
       Serial.print(endAngle);
       Serial.print("| yaw= ");
       Serial.println(yaw);
-      delay(1000);
     }
   }
 
   //Turn with 1 degree ofsett
-  while ((endAngle - 1 > yaw) || (endAngle + 1 < yaw))
+  while ((endAngle - 5 > yaw) || (endAngle + 5 < yaw))
   {
     //Turn right if goes to far
-    if (endAngle - 1 > yaw)
+    if (endAngle - 5 > yaw)
     {
       //Turn Right
+      turnRight(moveSpeed);
       gybno5();
       Serial.print("TURN RIGHT  ");
       Serial.print("endAngle= ");
       Serial.print(endAngle);
       Serial.print("| yaw=");
       Serial.println(yaw);
-      delay(1000);
     }
-    if (endAngle + 1 < yaw)
+    if (endAngle + 5 < yaw)
     {
       //Turn Left
+      turnLeft(moveSpeed);
       gybno5();
       Serial.print("TURN LEFT  ");
       Serial.print("endAngle= ");
       Serial.print(endAngle);
       Serial.print("| yaw= ");
       Serial.println(yaw);
-      delay(1000);
     }
   }
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   //Bluetooth setup
-  SerialBT.begin("PLOPKOEK"); //Bluetooth device name
-  Serial.println("The device started, now you can pair it with bluetooth!");
+  /*
+    SerialBT.begin("PLOPKOEK"); //Bluetooth device name
+    Serial.println("The device started, now you can pair it with bluetooth!");
+  */
 
   //Pinnen
   pinMode(encoderPin, INPUT);
@@ -439,6 +450,7 @@ void setup() {
   pinMode(echoPinRight, INPUT);
   pinMode(echoPinDown, INPUT);
   pinMode(voltagePin, INPUT);
+  pinMode(servoControlPin, OUTPUT);
   digitalWrite(trigPin, LOW);
 
   //assign PWM-channels with a corresponding frequency and resolution
@@ -486,6 +498,7 @@ void setup() {
   yaw0 = yaw;
   roll0 = roll;
   pitch0 = pitch;
+
 }
 
 //States
@@ -500,22 +513,42 @@ int state = 1;
 */
 
 void loop() {
+  rest();
   if (state == 1)
   {
     Serial.print("State: ");
     Serial.println(state);
-    bluetoothString = "State: " + String(state);
-    SerialBT.println(bluetoothString);
+    /*
+      bluetoothString = "State: " + String(state);
+      SerialBT.println(bluetoothString);
+    */
     //Insert all scanning sensors here
 
     //BNO055
     gybno5();
 
     //Ultrasoundsensors
+
+    delay(1000);
     distanceForward = scanningUS(echoPinForward);
+    delay(10);
     distanceLeft = scanningUS(echoPinLeft);
+    delay(10);
     distanceRight = scanningUS(echoPinRight);
+    delay(10);
     distanceDown = scanningUS(echoPinDown);
+    delay(10);
+
+
+    Serial.print("Left: ");
+    Serial.print(distanceLeft);
+    Serial.print(" |Right: ");
+    Serial.print(distanceRight);
+    Serial.print("|Forward: ");
+    Serial.print(distanceForward);
+    Serial.print("|Down: ");
+    Serial.println(distanceDown);
+
 
     //Scanning is done, calibrate (state 2) or decide what to do (state 3)
     if (calibrated == false)
@@ -543,9 +576,12 @@ void loop() {
     if (abs(distanceBeginningLeft - distanceEndLeft) <= 4 || abs(distanceBeginningRight - distanceEndRight) <= 4)
     {
       calibrated = true;
+      Serial.println("CALIBRATED");
+      state = 3;
     }
     else
     {
+      Serial.println("NOT CALIBRATED");
       reverse(moveSpeed);
       delay(1000);
       rest();
@@ -573,19 +609,54 @@ void loop() {
     {
       Serial.println("ON BRIDGE");
       delay(1000);
-      state = 3;
+      state = 4;
     }
     //Als de auto op brug staat (aangegeven door de gyroscoop) en het nadert de zijkanten
 
     //Auto staat op de vloer
-    if (abs(roll) < 20 && abs(pitch) < 20)
+    else
     {
       Serial.println("ON FLOOR");
       delay(1000);
 
+      //Vooruit rijden als het mogelijk is
+      if (distanceForward > 10)
+      {
+        Serial.println("VOORUIT RIJDEN");
+        forward(moveSpeed);
+        delay(200);
+        rest();
+      }
+      else
+      {
+        rest();
+        Serial.println("OBSTAKEL VAN VOOR");
+      }
+
+      //muur links
+      if (distanceLeft < 10)
+      {
+        while (distanceLeft < 10)
+        {
+          translateRight(moveSpeed);
+        }
+        rest();
+      }
+
+      //muur rechts
+      if (distanceRight < 10)
+      {
+        while (distanceRight < 10)
+        {
+          translateLeft(moveSpeed);
+        }
+        rest();
+      }
+
       //Escape function if trapped
       if (distanceLeft < 50 && distanceRight < 50 && distanceForward < 15)
       {
+        Serial.println("ESCAPE FUNCTION");
         while (distanceLeft < 50 || distanceRight < 50)
         {
           reverse(moveSpeed);
@@ -625,8 +696,9 @@ void loop() {
         }
       }
 
-      state = 3;
+      
     }
+    state = 4;
   }
   if (state == 4)
   {
@@ -646,15 +718,15 @@ void loop() {
     //After the voltage check go back to state 1
     state = 1;
   }
-
-  if (Serial.available()) {
-    SerialBT.write(Serial.read());
-  }
-  if (SerialBT.available()) {
-    Serial.write(SerialBT.read());
-  }
-  delay(20);
-
+  /*
+    if (Serial.available()) {
+      SerialBT.write(Serial.read());
+    }
+    if (SerialBT.available()) {
+      Serial.write(SerialBT.read());
+    }
+    delay(20);
+  */
 
   //forward(50);
   //delay(1000);
